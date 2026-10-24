@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Michigan Driving Law</title>
+  <meta name="description" content="Animated walkthrough of the Michigan Vehicle Code, Chapter VI (MCL 257.601 to 257.750), for classroom use.">
+  <link rel="stylesheet" href="css/app.css?v=1">
+</head>
+<body>
+  <header class="top">
+    <button class="icon-btn nav-toggle" id="navToggle" aria-label="Show section list" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="brand">
+      <div class="brand-title">Michigan Driving Law</div>
+      <div class="brand-sub">Michigan Vehicle Code · Chapter VI · MCL 257.601–257.750</div>
+    </div>
+    <div class="top-actions">
+      <button class="btn ghost" id="presentBtn" title="Presentation mode (F)">Present</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="nav" id="nav" aria-label="Sections">
+      <div class="nav-search">
+        <input id="search" type="search" placeholder="Search sections (e.g. 643, school bus)" autocomplete="off">
+      </div>
+      <div class="nav-list" id="navList"></div>
+      <p class="nav-foot">Only sections about operating a motor vehicle that can be shown on screen are included. Repealed, administrative, and court-procedure sections are left out.</p>
+    </aside>
+
+    <main class="main" id="main">
+      <div class="stage-card">
+        <div class="stage-wrap">
+          <svg id="stage" role="img" aria-label="Animated traffic scene"></svg>
+          <button class="big-play" id="bigPlay" aria-label="Play">
+            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <div class="caption" id="caption" aria-live="polite"><span class="cap-dot"></span><span class="cap-text"></span></div>
+        <div class="controls">
+          <button class="icon-btn" id="prevSec" title="Previous section (←)" aria-label="Previous section">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6h2v12H6zM20 6v12L9.5 12z" fill="currentColor"/></svg>
+          </button>
+          <button class="icon-btn primary" id="play" title="Play / pause (Space)" aria-label="Play">
+            <svg class="i-play" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            <svg class="i-pause" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>
+          </button>
+          <button class="icon-btn" id="restart" title="Restart (R)" aria-label="Restart">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z" fill="currentColor"/></svg>
+          </button>
+          <button class="icon-btn" id="nextSec" title="Next section (→)" aria-label="Next section">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M16 6h2v12h-2zM4 6v12l10.5-6z" fill="currentColor"/></svg>
+          </button>
+          <div class="scrub">
+            <div class="ticks" id="ticks"></div>
+            <input id="scrub" type="range" min="0" max="10" step="0.01" value="0" aria-label="Scene time">
+          </div>
+          <span class="time" id="time">0:00</span>
+          <select id="speed" aria-label="Playback speed" title="Playback speed">
+            <option value="0.5">0.5×</option>
+            <option value="0.75">0.75×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.5">1.5×</option>
+          </select>
+          <label class="toggle" title="Pause at each new caption so you can discuss it">
+            <input type="checkbox" id="stepMode"> <span>Pause at steps</span>
+          </label>
+          <label class="toggle" title="Go to the next section when this one ends">
+            <input type="checkbox" id="autoNext"> <span>Auto-advance</span>
+          </label>
+        </div>
+      </div>
+
+      <section class="info" id="info">
+        <div class="info-head">
+          <span class="sec-badge" id="secBadge">MCL 257.601</span>
+          <span class="chip" id="penalty"></span>
+          <span class="div-name" id="divName"></span>
+        </div>
+        <h1 id="secTitle"></h1>
+        <ul class="rules" id="rules"></ul>
+        <p class="src">
+          <a id="srcLink" href="#" target="_blank" rel="noopener">Read the full statute on legislature.mi.gov ↗</a>
+          <span class="disclaimer">Plain-language summary for teaching, not legal advice. Summaries reflect the statute text as published in October 2026.</span>
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/engine.js?v=1"></script>
+  <script src="js/kit.js?v=1"></script>
+  <script src="js/scenes/general.js?v=1"></script>
+  <script src="js/scenes/signals.js?v=1"></script>
+  <script src="js/scenes/accidents.js?v=1"></script>
+  <script src="js/scenes/owi.js?v=1"></script>
+  <script src="js/scenes/speed.js?v=1"></script>
+  <script src="js/scenes/lanes.js?v=1"></script>
+  <script src="js/scenes/rightofway.js?v=1"></script>
+  <script src="js/scenes/motorcycles.js?v=1"></script>
+  <script src="js/scenes/stops.js?v=1"></script>
+  <script src="js/scenes/parking.js?v=1"></script>
+  <script src="js/scenes/misc.js?v=1"></script>
+  <script src="js/scenes/equipment.js?v=1"></script>
+  <script src="js/scenes/size.js?v=1"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scene sheet</title>
+<style>
+  body { margin: 0; background: #111; color: #ddd; font: 13px system-ui, sans-serif; }
+  .grid { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 6px; padding: 6px; }
+  figure { margin: 0; background: #222; min-width: 0; }
+  figcaption { padding: 3px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  svg { display: block; width: 100%; aspect-ratio: 16/9; }
+</style>
+</head>
+<body>
+<div class="grid" id="g"></div>
+<script>
+  // Cache-busted loads so edited scene files are always picked up.
+  for (const f of ['engine', 'kit', 'scenes/general', 'scenes/signals', 'scenes/accidents', 'scenes/owi', 'scenes/speed', 'scenes/lanes', 'scenes/rightofway', 'scenes/motorcycles', 'scenes/stops', 'scenes/parking', 'scenes/misc', 'scenes/equipment', 'scenes/size'])
+    document.write(`<script src="../js/${f}.js?v=${Date.now()}"><\/script>`);
+</script>
+<script>
+  // ?s=601c,602 renders each caption moment of those sections; ?t=0.5 renders every section at that fraction.
+  const q = new URLSearchParams(location.search);
+  const g = document.getElementById('g');
+  g.style.setProperty('--cols', q.get('cols') || 2);
+  const want = q.get('s') ? q.get('s').split(',') : null;
+  const errors = [];
+  for (const d of LAW.list) {
+    if (want && !want.includes(d.sec)) continue;
+    const probe = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    let times;
+    try {
+      const sc = new DL.Scene(probe, d);
+      times = want ? (q.get('at') ? q.get('at').split(',').map(Number) : sc.says.map(c => c.t + 0.7)) : [sc.dur * Number(q.get('t') || 0.5)];
+    } catch (e) { errors.push(d.sec + ': ' + e.message); continue; }
+    for (const t of times) {
+      const f = document.createElement('figure');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      f.appendChild(svg);
+      const cap = document.createElement('figcaption');
+      f.appendChild(cap);
+      g.appendChild(f);
+      try {
+        const sc = new DL.Scene(svg, d);
+        sc.render(t);
+        const c = sc.caption(t);
+        cap.textContent = `257.${d.sec} @${t.toFixed(1)}s — ${c ? c.text : ''}`;
+      } catch (e) { cap.textContent = `257.${d.sec} ERROR ${e.message}`; errors.push(d.sec + ': ' + e.message); }
+    }
+  }
+  window.ERR = errors;
+</script>
+</body>
+</html>

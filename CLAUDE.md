@@ -16,6 +16,7 @@ An interactive animation of Michigan Vehicle Code Chapter VI (MCL 257.601–257.
 ## Tech
 
 - Plain static site: no build, no dependencies, must work opened from disk on a classroom computer. Don't introduce modules, fetch, or CDNs.
+- The instructor uses `Michigan-Driving-Law.html`, a single-file build (an earlier copy failed when `index.html` was opened without its `css/` and `js/` folders). Run `python tools/build_standalone.py` after every change to the site and commit the regenerated file with it.
 - Scenes are deterministic functions of time (`Scene.render(t)`), so scrubbing and pausing work everywhere. Never use wall-clock timers inside a scene.
 - World coordinates are 1600×900. One lane is 64 px (12 ft); `DL.FT` is pixels per foot in top-down views. Map backgrounds default to a slightly zoomed view (`zoom` option) — keep overlays inside it.
 - Check visual changes with `dev/sheet.html?s=<sections>` before committing. Bump the `?v=` query on asset URLs in `index.html` when shipping changes so classroom browsers don't use stale caches.

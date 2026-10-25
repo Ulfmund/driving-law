@@ -6,7 +6,11 @@ Built for a criminal justice course: projected in front of the class and driven 
 
 ## Using it
 
-Open `index.html` in a browser. No install, build step, or internet connection is needed (the statute links are the only external links). You can also serve the folder with any static server, for example:
+**For the classroom, use `Michigan-Driving-Law.html`.** It's the whole thing in one file: copy it to a USB drive, email it, or download it on its own, then double-click it. No install or internet connection is needed (the statute links are the only external links).
+
+`index.html` also works, but only alongside its `css/` and `js/` folders. Opened by itself (for example straight from inside a ZIP without extracting it first), it shows a blank page and “Failed to load resource” errors.
+
+To work on the code, serve the folder with any static server, for example:
 
 ```bash
 python -m http.server 8765
@@ -31,4 +35,5 @@ Summaries were written from the statute text published on legislature.mi.gov in 
 - `js/engine.js`: the scene engine. Roads, intersections, and other backgrounds; vehicles and people that follow timed paths; signals, gates, signs, callouts, measurements, and night lighting.
 - `js/kit.js`: the section registry (`LAW.add`) plus shared drawings (side views, car interiors, tables, checklists).
 - `js/scenes/*.js`: one file per group of sections. Each `LAW.add({...})` holds the section number, title, penalty, plain-language rules, and a `build(s)` function that scripts its animation.
+- `Michigan-Driving-Law.html`: the single-file build. Regenerate it after any change with `python tools/build_standalone.py`.
 - `dev/sheet.html`: a contact sheet for checking scenes. `dev/sheet.html?s=682,683` renders each caption moment of those sections; `dev/sheet.html?t=0.5` renders every section at the halfway point.

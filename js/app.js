@@ -14,7 +14,9 @@
     civil: 'Civil infraction', misd: 'Misdemeanor', felony: 'Felony', mixed: 'Misdemeanor or felony', none: 'No separate penalty',
   };
 
-  const st = { i: 0, scene: null, t: 0, playing: false, speed: 1, last: performance.now(), cap: null, wait: null };
+  const st = { i: 0, scene: null, t: 0, playing: false, speed: 1, last: performance.now(), cap: null, wait: null, mode: 'diagram' };
+  // Drawing style is a per-viewer preference; storage can be unavailable, so it's only a convenience.
+  try { if (localStorage.getItem('dl-view') === 'art') st.mode = 'art'; } catch (e) { /* default stays */ }
 
   /* ---------- Section list ---------- */
   function buildNav(filter = '') {
@@ -59,7 +61,7 @@
     const d = list[st.i];
     clearTimeout(st.wait);
     try {
-      st.scene = new DL.Scene($('stage'), d);
+      st.scene = new DL.Scene($('stage'), d, { mode: st.mode });
     } catch (e) {
       console.error('Scene failed for 257.' + d.sec, e);
       $('stage').innerHTML = `<text x="800" y="450" text-anchor="middle" font-size="32" fill="#fff">This animation failed to load.</text>`;
@@ -78,6 +80,7 @@
     document.title = `257.${d.sec} ${d.title} · Michigan Driving Law`;
     if (location.hash !== '#257.' + d.sec) history.replaceState(null, '', '#257.' + d.sec);
     buildTicks();
+    buildLegend();
     markActive();
     document.body.classList.remove('started');
     render();
@@ -99,6 +102,29 @@
       b.addEventListener('click', () => { st.t = c.t + 0.01; render(); });
       box.appendChild(b);
     });
+  }
+
+  function buildLegend() {
+    const diagram = !!(st.scene && st.scene.diagram);
+    $('diagBadge').hidden = !diagram;
+    const box = $('legend');
+    const items = diagram ? st.scene.legendItems() : [];
+    box.hidden = !items.length;
+    box.innerHTML = items.length ? `<span class="lg-title">Legend</span>` + items.map(it =>
+      `<span class="lg-item"><svg viewBox="0 0 34 23" width="40" height="27" aria-hidden="true" font-family="system-ui,Segoe UI,Arial">${it.icon}</svg>${esc(it.label)}</span>`).join('') : '';
+  }
+
+  function setMode(mode) {
+    if (mode === st.mode) return;
+    st.mode = mode;
+    try { localStorage.setItem('dl-view', mode); } catch (e) { /* not saved; still applies now */ }
+    $('viewDiagram').setAttribute('aria-pressed', mode === 'diagram');
+    $('viewArt').setAttribute('aria-pressed', mode === 'art');
+    // Rebuild the current scene in the new style without losing the playback position.
+    const t = st.t, playing = st.playing;
+    load(st.i, playing);
+    st.t = t; render();
+    if (t > 0) document.body.classList.add('started');
   }
 
   /* ---------- Playback ---------- */
@@ -155,6 +181,10 @@
   $('prevSec').addEventListener('click', () => load(st.i - 1, st.playing));
   $('nextSec').addEventListener('click', () => load(st.i + 1, st.playing));
   $('speed').addEventListener('change', e => { st.speed = Number(e.target.value); });
+  $('viewDiagram').addEventListener('click', () => setMode('diagram'));
+  $('viewArt').addEventListener('click', () => setMode('art'));
+  $('viewDiagram').setAttribute('aria-pressed', st.mode === 'diagram');
+  $('viewArt').setAttribute('aria-pressed', st.mode === 'art');
   $('scrub').addEventListener('input', e => { st.t = Number(e.target.value); setPlaying(false); document.body.classList.add('started'); render(); });
   $('search').addEventListener('input', e => { buildNav(e.target.value); markActive(); });
   $('navToggle').addEventListener('click', () => {

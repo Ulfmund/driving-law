@@ -130,6 +130,24 @@ button, input, select { font: inherit; color: inherit; }
 .big-play:hover { transform: scale(1.05); }
 .playing .big-play, .started .big-play { opacity: 0; pointer-events: none; }
 
+/* Crash-diagram furniture: north arrow + "not to scale" label on the stage, symbol legend under it. */
+.diag-badge {
+  position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 8px;
+  background: rgba(255, 255, 255, .92); color: #151515; border: 1.5px solid #151515; border-radius: 6px;
+  padding: 4px 10px 4px 6px; font-size: 13px; font-weight: 700; pointer-events: none;
+}
+.legend {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  padding: 8px 16px; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink-2);
+}
+.legend .lg-title { font-weight: 800; color: var(--ink); text-transform: uppercase; letter-spacing: .06em; font-size: 12px; }
+.legend .lg-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg { background: #fff; border-radius: 4px; border: 1px solid var(--line); flex: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: var(--panel-2); padding: 7px 12px; font-size: 14px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
 .caption {
   display: flex; align-items: center; gap: 14px; min-height: 76px;
   padding: 14px 22px; border-top: 1px solid var(--line); background: var(--panel-2);

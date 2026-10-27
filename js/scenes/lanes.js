@@ -234,7 +234,7 @@
     ],
     dur: 11,
     build(s) {
-      s.bg('blank', { fill: '#a9c98f' });
+      s.bg('blank', { fill: '#a9c98f', map: true });
       const cx = 800, cy = 450;
       const arcLine = (r, gaps) => {
         let d = '';

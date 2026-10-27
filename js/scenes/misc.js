@@ -272,7 +272,7 @@
     ],
     dur: 9,
     build(s) {
-      s.bg('blank', { fill: '#e9eef4' });
+      s.bg('blank', { fill: '#e9eef4', map: true });
       let lot = `<rect x="200" y="160" width="1200" height="580" fill="#7a7f86"/>`;
       for (let x = 260; x < 1360; x += 110) lot += `<rect x="${x}" y="170" width="4" height="120" fill="#f3f3f0"/><rect x="${x}" y="610" width="4" height="120" fill="#f3f3f0"/>`;
       s.raw(lot, { layer: 'bg' });

@@ -234,7 +234,110 @@
       <rect x="${L / 2 - 11}" y="${-Wd / 2 + 4}" width="7" height="${Wd - 8}" rx="2" fill="#22313f" opacity=".85"/>`;
   }
 
+  /* ---------------- Crash-diagram style ----------------
+     Plan-view scenes can be drawn the way officers sketch a UD-10 crash diagram, using the
+     symbols in Michigan's e-crash (iyeTek Crash Designer) Sketch palette: units as outlined
+     boxes with a solid triangle pointing the direction of travel, numbered in order, a filled
+     block for damage, a point-of-impact mark, and a debris symbol. CUR.diagram is on while a
+     diagram-style scene is being built, so every drawing helper picks the right style. */
+
+  const CUR = { diagram: false };
+  const DIAG = {
+    grass: '#ffffff', grassDark: '#f3f3f1', road: '#e6e6e3', shoulder: '#efefec', line: '#1b1b1b', yellow: '#1b1b1b',
+    curb: '#8c8c8c', walk: '#f6f6f4', tie: '#444444', rail: '#111111', ballast: '#ffffff',
+  };
+  // Literal colors used by hand-drawn backgrounds in scene files, mapped to diagram equivalents.
+  const DIAG_REMAP = {
+    '#55595f': DIAG.road, '#8e9398': '#ececea', '#a9c98f': '#ffffff', '#93b878': '#f3f3f1', '#7a7f86': '#dedede',
+    '#9a9590': '#ececea', '#bdb8ae': '#d6d6d4', '#d6d2c8': '#9a9a9a', '#f3f3f0': '#1b1b1b', '#f2c230': '#1b1b1b',
+    '#7d8187': DIAG.road, '#5f6368': '#1b1b1b', '#4a90c2': '#d7e8f4', '#9aa1a8': '#6b6b6b', '#e9eef4': '#ffffff',
+  };
+  const INK = '#151515';
+  const tint = (hex, amt = 0.8) => {
+    const m = /^#([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return '#ffffff';
+    const n = parseInt(m[1], 16), ch = s => Math.round(((n >> s) & 255) * (1 - amt) + 255 * amt);
+    return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+  };
+  // Which legend entry a vehicle kind belongs to.
+  const UNIT_CLASS = kind => ({
+    truck: 'truck', semi: 'truck', dump: 'truck', garbage: 'truck', utility: 'truck', tow: 'truck', plow: 'truck', fire: 'truck', oversize: 'truck',
+    bus: 'bus', school: 'bus', moto: 'moto', bike: 'bike', tractor: 'farm', paver: 'farm', train: 'train',
+  }[kind] || 'auto');
+
+  // Small icons for the on-screen legend (34×22 viewBox).
+  const LEGEND = {
+    auto: ['Motor vehicle (unit)', `<rect x="2" y="5" width="30" height="13" fill="#fff" stroke="${INK}" stroke-width="2"/><polygon points="29,11.5 21,7.5 21,15.5" fill="${INK}"/><text x="11" y="15" font-size="9" font-weight="800" text-anchor="middle" fill="${INK}">1</text>`],
+    truck: ['Truck', `<rect x="1" y="5" width="32" height="13" fill="#fff" stroke="${INK}" stroke-width="2"/><line x1="24" y1="5" x2="24" y2="18" stroke="${INK}" stroke-width="2"/><polygon points="31,11.5 26,8 26,15" fill="${INK}"/>`],
+    bus: ['Bus', `<rect x="1" y="5" width="32" height="13" fill="#fff" stroke="${INK}" stroke-width="2"/><text x="13" y="15" font-size="8" font-weight="800" text-anchor="middle" fill="${INK}">BUS</text><polygon points="31,11.5 25,8 25,15" fill="${INK}"/>`],
+    moto: ['Motorcycle / moped', `<rect x="6" y="8" width="22" height="7" fill="#fff" stroke="${INK}" stroke-width="2"/><polygon points="27,11.5 21,9 21,14" fill="${INK}"/>`],
+    bike: ['Bicycle', `<polygon points="28,11.5 8,4 8,19" fill="#fff" stroke="${INK}" stroke-width="2"/><circle cx="14" cy="11.5" r="3" fill="none" stroke="${INK}" stroke-width="1.6"/>`],
+    farm: ['Farm / road equipment', `<rect x="4" y="4" width="24" height="15" fill="#fff" stroke="${INK}" stroke-width="2"/><polygon points="10,15 14,7 18,15" fill="#ff7a00" stroke="${INK}"/>`],
+    train: ['Train', `<line x1="1" y1="8" x2="33" y2="8" stroke="${INK}" stroke-width="2"/><line x1="1" y1="15" x2="33" y2="15" stroke="${INK}" stroke-width="2"/><rect x="6" y="5" width="22" height="13" fill="#fff" stroke="${INK}" stroke-width="2"/>`],
+    ped: ['Person', `<circle cx="17" cy="11.5" r="6.5" fill="#fff" stroke="${INK}" stroke-width="2"/><line x1="17" y1="11.5" x2="25" y2="11.5" stroke="${INK}" stroke-width="2"/>`],
+    poi: ['Point of impact', `<circle cx="17" cy="11.5" r="8" fill="#fff" stroke="#b3140c" stroke-width="2"/><path d="M 12 6.5 L 22 16.5 M 22 6.5 L 12 16.5" stroke="#b3140c" stroke-width="2.4"/>`],
+    damage: ['Vehicle damage', `<rect x="2" y="5" width="30" height="13" fill="#fff" stroke="${INK}" stroke-width="2"/><rect x="24" y="5" width="8" height="13" fill="${INK}"/>`],
+    debris: ['Debris', `<path d="M 9 8 L 14 4 L 18 9 L 24 6 L 27 12 L 22 18 L 15 15 L 9 18 L 7 13 Z" fill="${INK}"/>`],
+  };
+
+  function diagVehicle(kind, color, o) {
+    const k = KIND[kind] || KIND.car;
+    const L = k.L, Wd = k.W;
+    const fill = tint(color, 0.82);
+    const box = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${INK}" stroke-width="2.5"/>`;
+    const tri = (L2, W2) => `<polygon points="${L2 / 2 - 4},0 ${L2 / 2 - 4 - Math.min(18, W2 * 0.6)},${-W2 * 0.3} ${L2 / 2 - 4 - Math.min(18, W2 * 0.6)},${W2 * 0.3}" fill="${INK}"/>`;
+    const cab = (L2, W2, len) => `<line x1="${L2 / 2 - len}" y1="${-W2 / 2}" x2="${L2 / 2 - len}" y2="${W2 / 2}" stroke="${INK}" stroke-width="2"/>`;
+    switch (kind) {
+      case 'bike': return `<polygon points="${L / 2},0 ${-L / 2},${-Wd / 2 - 3} ${-L / 2},${Wd / 2 + 3}" fill="#fff" stroke="${INK}" stroke-width="2"/><circle cx="-3" cy="0" r="3.5" fill="none" stroke="${INK}" stroke-width="1.6"/>`;
+      case 'moto': return box(-L / 2, -Wd / 2, L, Wd) + tri(L, Wd) +
+        `<circle cx="-4" cy="0" r="5" fill="${o.helmet === false ? '#c48b5c' : INK}" data-part="helmet"/>` +
+        (o.passenger ? `<circle cx="-13" cy="0" r="4" fill="${o.passengerHelmet === false ? '#c48b5c' : INK}"/>` : '') +
+        `<circle cx="${L / 2 - 4}" cy="-6" r="2.5" fill="#ffb21f" opacity="0" data-part="sigL"/><circle cx="${L / 2 - 4}" cy="6" r="2.5" fill="#ffb21f" opacity="0" data-part="sigR"/>
+         <rect x="${L / 2 - 2}" y="-2" width="3" height="4" fill="#fff6c8" data-part="head"/><rect x="${-L / 2 - 1}" y="-2" width="3" height="4" fill="#6e1111" data-part="tail"/>`;
+      case 'train': {
+        let s = `<line x1="${-L / 2 - 40}" y1="${-Wd / 2 - 4}" x2="${L / 2 + 40}" y2="${-Wd / 2 - 4}" stroke="${INK}" stroke-width="2"/><line x1="${-L / 2 - 40}" y1="${Wd / 2 + 4}" x2="${L / 2 + 40}" y2="${Wd / 2 + 4}" stroke="${INK}" stroke-width="2"/>`;
+        s += box(L / 2 - 90, -Wd / 2, 90, Wd) + tri(L, Wd);
+        for (let i = 0; i < 5; i++) s += box(L / 2 - 96 - (i + 1) * 106, -Wd / 2 + 1, 100, Wd - 2);
+        return s;
+      }
+      case 'trailer': return `<g transform="translate(${L / 2 - 33},0)">${box(-32, -15, 64, 30)}${tri(64, 30)}${lightsFor(64, 30)}</g>` +
+        box(-L / 2, -Wd / 2, L - 66, Wd) + `<line x1="${L / 2 - 84}" y1="0" x2="${L / 2 - 64}" y2="0" stroke="${INK}" stroke-width="3"/>
+        <g data-part="chains"><path d="M ${L / 2 - 84} -9 L ${L / 2 - 64} -6 M ${L / 2 - 84} 9 L ${L / 2 - 64} 6" stroke="${INK}" stroke-width="1.6" stroke-dasharray="3 2"/></g>`;
+      default: break;
+    }
+    let s = box(-L / 2, -Wd / 2, L, Wd) + tri(L, Wd);
+    const big = ['truck', 'semi', 'dump', 'garbage', 'utility', 'tow', 'plow', 'fire', 'ambulance', 'bus', 'school'];
+    if (kind === 'semi') s += cab(L, Wd, 48);
+    else if (big.includes(kind)) s += cab(L, Wd, 30);
+    if (kind === 'pickup' || kind === 'lumber') s += `<rect x="${-L / 2 + 4}" y="${-Wd / 2 + 5}" width="28" height="${Wd - 10}" fill="none" stroke="${INK}" stroke-width="1.4"/>`;
+    if (kind === 'bus' || kind === 'school') s += `<text x="${-L / 2 + 8}" y="5" font-size="13" font-weight="800" fill="${INK}" font-family="system-ui,Segoe UI,Arial">${kind === 'school' ? 'SCHOOL BUS' : 'BUS'}</text>`;
+    if (kind === 'plow') s += `<polygon points="${L / 2 - 4},${-Wd / 2 - 10} ${L / 2 + 6},${-Wd / 2 - 10} ${L / 2 + 12},${Wd / 2 + 8} ${L / 2 + 2},${Wd / 2 + 8}" fill="#fff" stroke="${INK}" stroke-width="2"/>`;
+    if (kind === 'tractor' || kind === 'paver') s += `<polygon points="-30,8 -22,-8 -14,8" fill="#ff7a00" stroke="${INK}" stroke-width="1.5"/>`;
+    if (kind === 'oversize') s += `<text x="-20" y="6" text-anchor="middle" font-size="14" font-weight="800" fill="${INK}" font-family="system-ui,Segoe UI,Arial">WIDE LOAD</text><rect x="${-L / 2 + 10}" y="${-Wd / 2 - 3}" width="14" height="10" fill="#e3261f"/><rect x="${-L / 2 + 10}" y="${Wd / 2 - 7}" width="14" height="10" fill="#e3261f"/>`;
+    if (kind === 'lumber') s += `<g data-part="load"><rect x="${-L / 2 - 46}" y="-10" width="86" height="20" fill="#fff" stroke="${INK}" stroke-width="1.6"/><path d="M ${-L / 2 - 46} -3 h 86 M ${-L / 2 - 46} 3 h 86" stroke="${INK}" stroke-width="1"/>
+      <rect x="${-L / 2 - 58}" y="-8" width="14" height="14" fill="#e3261f" data-part="flag"/><circle cx="${-L / 2 - 49}" cy="0" r="6" fill="#ff3b30" opacity="0" data-part="lantern"/></g>`;
+    if (kind === 'police') s += bar(-4, 0, Wd - 6);
+    if (kind === 'ambulance') s += bar(L / 2 - 34, 0, Wd - 8, '#e0262b', '#ffffff');
+    if (kind === 'fire') s += bar(L / 2 - 30, 0, Wd - 8, '#ff2a2a', '#ffffff');
+    if (['plow', 'garbage', 'utility', 'tow', 'paver', 'tractor'].includes(kind)) s += bar(kind === 'tractor' ? -2 : L / 2 - 36, 0, Math.min(14, Wd - 8), '#ffb000', '#ffb000', 6);
+    if (kind === 'school') s += `<circle cx="${L / 2 - 3}" cy="${-Wd / 2 + 5}" r="4" fill="#ff2a1a" opacity=".15" data-part="sbA"/><circle cx="${L / 2 - 3}" cy="${Wd / 2 - 5}" r="4" fill="#ff2a1a" opacity=".15" data-part="sbB"/>
+      <circle cx="${-L / 2 + 3}" cy="${-Wd / 2 + 5}" r="4" fill="#ff2a1a" opacity=".15" data-part="sbA"/><circle cx="${-L / 2 + 3}" cy="${Wd / 2 - 5}" r="4" fill="#ff2a1a" opacity=".15" data-part="sbB"/>
+      <circle cx="${L / 2 - 9}" cy="${-Wd / 2 + 5}" r="3.2" fill="#ffb000" opacity=".15" data-part="sbY"/><circle cx="${L / 2 - 9}" cy="${Wd / 2 - 5}" r="3.2" fill="#ffb000" opacity=".15" data-part="sbY"/>
+      <g data-part="arm" opacity="0"><rect x="${L / 2 - 34}" y="${-Wd / 2 - 18}" width="3" height="18" fill="#555"/><polygon points="${octagon(L / 2 - 32.5, -Wd / 2 - 26, 11)}" fill="#c8102e" stroke="#fff" stroke-width="1.5"/></g>`;
+    return s + lightsFor(L, kind === 'oversize' ? 40 : Wd);
+  }
+
+  function diagPerson(kind, o) {
+    const fill = { officer: '#1f2a44', worker: '#ff7b1a', flagger: '#ff7b1a', guard: '#c6e83a' }[kind] || '#ffffff';
+    const s = (kind === 'child' ? 0.75 : 1) * (o.scale || 1.35);
+    let extra = '';
+    if (kind === 'guard') extra = `<g data-part="handSign"><polygon points="${octagon(14, 14, 8)}" fill="#c8102e" stroke="#fff" stroke-width="1.5"/></g>`;
+    if (kind === 'flagger') extra = `<g data-part="paddleStop"><polygon points="${octagon(15, 16, 9)}" fill="#c8102e" stroke="#fff" stroke-width="1.5"/></g><g data-part="paddleSlow" opacity="0"><polygon points="15,7 24,16 15,25 6,16" fill="#ff8c1a" stroke="#222" stroke-width="1.2"/></g>`;
+    return `<g transform="scale(${s})"><circle r="8" fill="${fill}" stroke="${INK}" stroke-width="2"/><line x1="8" y1="0" x2="14" y2="0" stroke="${INK}" stroke-width="2"/>${extra}</g>`;
+  }
+
   function vehicleSVG(kind, color, o) {
+    if (CUR.diagram) return diagVehicle(kind, color, o || {});
     const k = KIND[kind] || KIND.car;
     const L = k.L, Wd = k.W;
     switch (kind) {
@@ -334,6 +437,7 @@
   }
 
   function personSVG(kind, o) {
+    if (CUR.diagram) return diagPerson(kind, o);
     const shirt = o.color || ({ ped: '#5b6fb5', worker: '#ff7b1a', officer: '#1f2a44', guard: '#c6e83a', flagger: '#ff7b1a', child: '#e05d8e', driver: '#5b6fb5' }[kind] || '#5b6fb5');
     const head = o.skin || '#e0b48c';
     const hat = kind === 'worker' || kind === 'flagger' ? '#ffd21a' : kind === 'officer' ? '#141c30' : null;
@@ -382,6 +486,16 @@
   /* ---------------- Props (static scenery and objects) ---------------- */
 
   function propSVG(type, o, r) {
+    if (CUR.diagram) {
+      // Plain outlines, the way a sketch shows landmarks.
+      if (type === 'tree') return `<g transform="scale(${o.s || 1})"><circle r="20" fill="#fff" stroke="${INK}" stroke-width="2"/><circle r="5" fill="none" stroke="${INK}" stroke-width="1.5"/></g>`;
+      if (type === 'house' || type === 'bldg') {
+        const w = o.w || (type === 'house' ? 90 : 160), h = o.h || (type === 'house' ? 70 : 110);
+        return `<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" fill="#fff" stroke="${INK}" stroke-width="2"/>` +
+          (type === 'house' ? `<path d="M ${-w / 2} ${-h / 2} L ${-w / 2 + h / 2} 0 L ${w / 2 - h / 2} 0 L ${w / 2} ${-h / 2} M ${-w / 2} ${h / 2} L ${-w / 2 + h / 2} 0 M ${w / 2 - h / 2} 0 L ${w / 2} ${h / 2}" stroke="${INK}" stroke-width="1.2" fill="none"/>` : '') +
+          (o.label ? `<text x="0" y="6" text-anchor="middle" font-size="18" font-weight="700" fill="${INK}" font-family="system-ui,Segoe UI,Arial">${esc(o.label)}</text>` : '');
+      }
+    }
     switch (type) {
       case 'tree': {
         const s = o.s || 1, c = o.c || ['#4f8a3c', '#5d9946', '#467d36'][Math.floor((r ? r() : 0.3) * 3)];
@@ -444,8 +558,17 @@
       }
       if (o.hi) {
         const k = KIND[this.kind] || { L: 30, W: 30 };
-        const ring = el('rect', { x: -k.L / 2 - 6, y: -k.W / 2 - 6, width: k.L + 12, height: k.W + 12, rx: 12, fill: 'none', stroke: '#ffffff', 'stroke-width': 3, opacity: 0.85 });
+        const ring = el('rect', { x: -k.L / 2 - 6, y: -k.W / 2 - 6, width: k.L + 12, height: k.W + 12, rx: 12, fill: 'none', stroke: scene.diagram ? '#2f6fd6' : '#ffffff', 'stroke-width': 3, opacity: 0.85 });
         this.body.insertBefore(ring, this.body.firstChild);
+      }
+      // In diagram style, vehicles are numbered units, as on a crash report.
+      this.isVehicle = !this.isPerson && (o.svg ? /data-part="tail"/.test(o.svg) : true) && o.unit !== false;
+      if (scene.diagram) {
+        if (this.isPerson) scene.useLegend('ped');
+        else if (this.isVehicle) {
+          scene.useLegend(UNIT_CLASS(this.kind));
+          if (this.kind !== 'train') this.unit = ++scene.units;
+        }
       }
       this.parts = {};
       this.body.querySelectorAll('[data-part]').forEach(n => (this.parts[n.dataset.part] = this.parts[n.dataset.part] || []).push(n));
@@ -457,6 +580,13 @@
       this.labelRect = el('rect', { rx: 13, fill: 'rgba(20,26,34,.82)' }, this.labelG);
       this.labelText = el('text', { 'text-anchor': 'middle', 'font-size': 22, 'font-weight': 700, fill: '#fff', 'font-family': 'system-ui,Segoe UI,Arial' }, this.labelG);
       this._lastLabel = null;
+      if (this.unit) {
+        // Sit the number clear of the direction triangle: toward the rear on cars, just behind the cab on long units.
+        const k = KIND[this.kind] || KIND.car;
+        this.unitOff = k.L >= 100 && !o.svg ? k.L / 2 - (this.kind === 'semi' ? 64 : 44) : -k.L * 0.12;
+        const n = this.unitText = el('text', { x: 0, y: 7, 'text-anchor': 'middle', 'font-size': 20, 'font-weight': 900, fill: INK, stroke: '#fff', 'stroke-width': 4, 'paint-order': 'stroke', 'font-family': 'system-ui,Segoe UI,Arial' }, this.deco);
+        n.textContent = this.unit;
+      }
       // Night glow (beams + lamps) lives above the night overlay.
       this.glow = el('g', {}, scene.L.glow);
       const k = KIND[this.kind] || { L: 30, W: 20 };
@@ -548,6 +678,12 @@
       if (P.flag) P.flag.forEach(n => n.setAttribute('opacity', tr.get('flag', t, true) ? 1 : 0));
       if (P.load) P.load.forEach(n => n.setAttribute('opacity', tr.get('load', t, true) ? 1 : 0));
       if (P.chains) P.chains.forEach(n => n.setAttribute('opacity', tr.get('chains', t, true) ? 1 : 0));
+      if (this.damage) for (const d of this.damage) d.n.setAttribute('opacity', t >= d.t ? 1 : 0);
+      if (this.unitText) {
+        const r = p.h * Math.PI / 180;
+        this.unitText.setAttribute('x', (Math.cos(r) * this.unitOff).toFixed(1));
+        this.unitText.setAttribute('y', (Math.sin(r) * this.unitOff + 7).toFixed(1));
+      }
 
       if (this.beamLow) {
         const n = this.s.nightAt(t);
@@ -591,8 +727,11 @@
   /* ---------------- Scene ---------------- */
 
   class Scene {
-    constructor(svg, def) {
+    // opts.mode: 'diagram' draws plan-view scenes as a crash-report diagram; anything else is the illustrated style.
+    constructor(svg, def, opts = {}) {
       this.svg = svg; this.def = def;
+      this.wantDiagram = opts.mode === 'diagram';
+      this.diagram = false; this.units = 0; this.legend = [];
       svg.innerHTML = '';
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
       this.rand = rng(def.sec);
@@ -612,8 +751,53 @@
       this.tr = new Tracks();
       this.dur = def.dur || 12;
       this.lanes = {};
-      def.build(this.api());
+      const saved = { ...C };
+      try {
+        def.build(this.api());
+      } finally {
+        Object.assign(C, saved);
+        CUR.diagram = false;
+      }
       this.says.sort((a, b) => a.t - b.t);
+      if (this.diagram) this.finishDiagram();
+    }
+    useLegend(key) { if (LEGEND[key] && !this.legend.includes(key)) this.legend.push(key); }
+    legendItems() { return this.legend.map(k => ({ key: k, label: LEGEND[k][0], icon: LEGEND[k][1] })); }
+
+    finishDiagram() {
+      // Recolor hand-drawn background pieces from scene files to the diagram palette.
+      for (const layer of [this.L.bg, this.L.marks]) {
+        layer.querySelectorAll('[fill],[stroke]').forEach(n => {
+          for (const a of ['fill', 'stroke']) {
+            const v = (n.getAttribute(a) || '').toLowerCase();
+            if (DIAG_REMAP[v]) n.setAttribute(a, DIAG_REMAP[v]);
+          }
+        });
+        // White lettering painted on pavement or lots would vanish on the light diagram ground.
+        layer.querySelectorAll('text').forEach(n => {
+          if (/^(#fff|#ffffff|white)$/i.test(n.getAttribute('fill') || '')) n.setAttribute('fill', INK);
+        });
+      }
+      // Damage: a filled block on each unit at the spot nearest each point of impact.
+      for (const b of this.fx.filter(f => f instanceof Boom)) {
+        for (const a of this.actors) {
+          if (!a.isVehicle || a.kind === 'train') continue;
+          const k = KIND[a.kind] || KIND.car, p = a.at(b.t);
+          const r = -p.h * Math.PI / 180, dx = b.x - p.x, dy = b.y - p.y;
+          const lx = dx * Math.cos(r) - dy * Math.sin(r), ly = dx * Math.sin(r) + dy * Math.cos(r);
+          const hx = k.L / 2, hy = k.W / 2;
+          if (Math.abs(lx) > hx + 26 || Math.abs(ly) > hy + 26) continue;
+          const s = Math.min(14, k.W * 0.45);
+          let cx = clamp(lx, -hx + s / 2, hx - s / 2), cy = clamp(ly, -hy + s / 2, hy - s / 2);
+          // Push the block against whichever edge faces the impact.
+          if (hx - Math.abs(lx) < hy - Math.abs(ly)) cx = Math.sign(lx || 1) * (hx - s / 2);
+          else cy = Math.sign(ly || 1) * (hy - s / 2);
+          const n = el('rect', { x: cx - s / 2, y: cy - s / 2, width: s, height: s, fill: INK, opacity: 0 }, a.body);
+          (a.damage = a.damage || []).push({ t: b.t, n });
+          this.useLegend('damage');
+        }
+        this.useLegend('poi'); this.useLegend('debris');
+      }
     }
     nightAt(t) { return this.tr.num('night', t, 0); }
 
@@ -623,6 +807,13 @@
         W, H, LANE, FT, C, rand: s.rand,
         P: (x, y, t) => new Path(x, y, t),
         bg: (type, o = {}) => {
+          // Only plan-view (top-down map) scenes become diagrams; side views, interiors, and the dash stay illustrated.
+          const map = ['road', 'cross', 'rail', 'freeway'].includes(type) || !!o.map;
+          if (s.wantDiagram && map) {
+            s.diagram = CUR.diagram = true;
+            Object.assign(C, DIAG);
+            if (type === 'blank') o = { ...o, fill: DIAG.grass };
+          } else if (!s.diagram) CUR.diagram = false;
           BG[type](s, o || {});
           // Map scenes are framed a little tighter than the full world so vehicles read at projector size.
           const z = { road: 1150, rail: 1150, cross: 1250, freeway: 1320 }[type];
@@ -672,7 +863,7 @@
         const vis = t >= d.t0 && t <= d.t1;
         d.g.setAttribute('opacity', vis ? (d.fade ? fade(t, d.t0, d.t1, d.fade) : 1) : 0);
       }
-      this.nightRect.setAttribute('opacity', this.nightAt(t) * 0.72);
+      this.nightRect.setAttribute('opacity', this.nightAt(t) * (this.diagram ? 0.5 : 0.72));
       if (this.bgTick) this.bgTick(t);
       if (this.viewKeys) {
         const k = this.viewKeys;
@@ -812,6 +1003,15 @@
     constructor(s, t, x, y, o) {
       Object.assign(this, { s, t, x, y, o });
       this.g = el('g', { opacity: 0 }, s.L.fx);
+      if (s.diagram) {
+        // Point of impact (circled X) with debris scattered just past it. Both stay for the rest of the scene.
+        const R = '#b3140c';
+        this.g.innerHTML = `<path d="M 26 18 L 33 13 L 38 19 L 45 16 L 48 23 L 42 30 L 34 27 L 28 31 L 25 25 Z" fill="${INK}" opacity=".85"/>
+          <circle cx="18" cy="34" r="3.5" fill="${INK}"/><circle cx="40" cy="4" r="3" fill="${INK}"/>
+          <circle r="11" fill="#fff" fill-opacity=".85" stroke="${R}" stroke-width="3"/><path d="M -6.5 -6.5 L 6.5 6.5 M 6.5 -6.5 L -6.5 6.5" stroke="${R}" stroke-width="3.2" stroke-linecap="round"/>`;
+        this.persist = true;
+        return;
+      }
       const pts = [];
       for (let i = 0; i < 16; i++) { const r = i % 2 ? 22 : 48, a = i * Math.PI / 8; pts.push((r * Math.cos(a)).toFixed(1) + ',' + (r * Math.sin(a)).toFixed(1)); }
       el('polygon', { points: pts.join(' '), fill: '#ffd23f', stroke: '#e8591a', 'stroke-width': 4 }, this.g);
@@ -819,6 +1019,13 @@
     }
     render(t) {
       const d = t - this.t;
+      if (this.persist) {
+        if (d < 0) { this.g.setAttribute('opacity', 0); return; }
+        const sc = d < 0.3 ? 1.6 - d * 2 : 1;
+        this.g.setAttribute('opacity', 1);
+        this.g.setAttribute('transform', `translate(${this.x},${this.y}) scale(${sc.toFixed(3)})`);
+        return;
+      }
       const hold = this.o.hold ?? 1.2;
       if (d < 0 || d > hold + 0.4) { this.g.setAttribute('opacity', 0); return; }
       const sc = d < 0.2 ? d / 0.2 * 1.15 : 1;
@@ -1004,7 +1211,7 @@
       }
     }
     // Scenery strips above and below.
-    if (o.scenery !== false) {
+    if (o.scenery !== false && !CUR.diagram) {
       const items = o.city ? ['bldg'] : ['tree', 'tree', 'house'];
       const upper = [0, 0, W, top - sh - park - (o.curb ? 56 : 10)], lower = [0, bot + sh + park + (o.curb ? 56 : 10), W, H];
       if (o.city) {
@@ -1063,7 +1270,7 @@
     el('rect', { x: 0, y: cy - HW - 10, width: W, height: 2 * HW + 20, fill: C.road }, g);
     el('rect', { x: cx - VW - 10, y: 0, width: 2 * VW + 20, height: H, fill: C.road }, g);
     // Scenery in the four quadrants.
-    if (o.scenery !== false) {
+    if (o.scenery !== false && !CUR.diagram) {
       const pad = walk ? 60 : 20;
       const q = [[0, 0, cx - VW - pad, cy - HW - pad], [cx + VW + pad, 0, W, cy - HW - pad], [0, cy + HW + pad, cx - VW - pad, H], [cx + VW + pad, cy + HW + pad, W, H]];
       if (o.city) q.forEach(r => { if (r[2] - r[0] > 80 && r[3] - r[1] > 80) frag(propSVG('bldg', { w: r[2] - r[0] - 40, h: r[3] - r[1] - 40, c: ['#9aa3ad', '#a38f7d', '#7f8fa6', '#b0a58f'][Math.floor(s.rand() * 4)] }), g, { transform: `translate(${(r[0] + r[2]) / 2},${(r[1] + r[3]) / 2})` }); });

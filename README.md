@@ -19,6 +19,7 @@ python -m http.server 8765
 Controls:
 
 - **Space**: play or pause. **R**: restart. **← / →** (or a presentation clicker's Page Up / Page Down): previous or next section. **F**: presentation mode (full screen, list hidden).
+- **Crash diagram / Illustrated** switches how road scenes are drawn. Crash diagram (the default) follows the conventions of a Michigan UD-10 crash diagram, using the symbols in the State Police e-crash diagramming tool: numbered units as outlined boxes with a triangle showing direction of travel, a point-of-impact mark, damage and debris symbols, a north arrow, a "not to scale" label, and a legend for the symbols in each scene. Scenes of car interiors, the dashboard, and side views are always illustrated.
 - Click a dot above the timeline to jump to that step of the narration.
 - **Pause at steps** stops at each new caption so the class can discuss it. **Auto-advance** plays straight through the chapter.
 - Link to a specific section with a hash, for example `index.html#257.682`.

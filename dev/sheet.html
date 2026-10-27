@@ -30,7 +30,7 @@
     const probe = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     let times;
     try {
-      const sc = new DL.Scene(probe, d);
+      const sc = new DL.Scene(probe, d, { mode: q.get('mode') });
       times = want ? (q.get('at') ? q.get('at').split(',').map(Number) : sc.says.map(c => c.t + 0.7)) : [sc.dur * Number(q.get('t') || 0.5)];
     } catch (e) { errors.push(d.sec + ': ' + e.message); continue; }
     for (const t of times) {
@@ -41,7 +41,7 @@
       f.appendChild(cap);
       g.appendChild(f);
       try {
-        const sc = new DL.Scene(svg, d);
+        const sc = new DL.Scene(svg, d, { mode: q.get('mode') });
         sc.render(t);
         const c = sc.caption(t);
         cap.textContent = `257.${d.sec} @${t.toFixed(1)}s — ${c ? c.text : ''}`;

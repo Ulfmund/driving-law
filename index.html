@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Michigan Driving Law</title>
   <meta name="description" content="Animated walkthrough of the Michigan Vehicle Code, Chapter VI (MCL 257.601 to 257.750), for classroom use.">
-  <link rel="stylesheet" href="css/app.css?v=1">
+  <link rel="stylesheet" href="css/app.css?v=2">
 </head>
 <body>
   <header class="top">
@@ -34,10 +34,15 @@
       <div class="stage-card">
         <div class="stage-wrap">
           <svg id="stage" role="img" aria-label="Animated traffic scene"></svg>
+          <div class="diag-badge" id="diagBadge" hidden>
+            <svg viewBox="0 0 24 40" width="20" height="34" aria-hidden="true"><polygon points="12,1 21,19 12,14 3,19" fill="#151515"/><text x="12" y="37" text-anchor="middle" font-size="15" font-weight="800" fill="#151515" font-family="system-ui,Segoe UI,Arial">N</text></svg>
+            <span>Diagram not to scale</span>
+          </div>
           <button class="big-play" id="bigPlay" aria-label="Play">
             <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
           </button>
         </div>
+        <div class="legend" id="legend" hidden></div>
         <div class="caption" id="caption" aria-live="polite"><span class="cap-dot"></span><span class="cap-text"></span></div>
         <div class="controls">
           <button class="icon-btn" id="prevSec" title="Previous section (←)" aria-label="Previous section">
@@ -64,6 +69,10 @@
             <option value="1" selected>1×</option>
             <option value="1.5">1.5×</option>
           </select>
+          <div class="seg" role="group" aria-label="Drawing style">
+            <button type="button" id="viewDiagram" aria-pressed="true" title="Draw road scenes like a UD-10 crash diagram">Crash diagram</button>
+            <button type="button" id="viewArt" aria-pressed="false" title="Draw road scenes as color illustrations">Illustrated</button>
+          </div>
           <label class="toggle" title="Pause at each new caption so you can discuss it">
             <input type="checkbox" id="stepMode"> <span>Pause at steps</span>
           </label>
@@ -89,21 +98,21 @@
     </main>
   </div>
 
-  <script src="js/engine.js?v=1"></script>
-  <script src="js/kit.js?v=1"></script>
-  <script src="js/scenes/general.js?v=1"></script>
-  <script src="js/scenes/signals.js?v=1"></script>
-  <script src="js/scenes/accidents.js?v=1"></script>
-  <script src="js/scenes/owi.js?v=1"></script>
-  <script src="js/scenes/speed.js?v=1"></script>
-  <script src="js/scenes/lanes.js?v=1"></script>
-  <script src="js/scenes/rightofway.js?v=1"></script>
-  <script src="js/scenes/motorcycles.js?v=1"></script>
-  <script src="js/scenes/stops.js?v=1"></script>
-  <script src="js/scenes/parking.js?v=1"></script>
-  <script src="js/scenes/misc.js?v=1"></script>
-  <script src="js/scenes/equipment.js?v=1"></script>
-  <script src="js/scenes/size.js?v=1"></script>
-  <script src="js/app.js?v=1"></script>
+  <script src="js/engine.js?v=2"></script>
+  <script src="js/kit.js?v=2"></script>
+  <script src="js/scenes/general.js?v=2"></script>
+  <script src="js/scenes/signals.js?v=2"></script>
+  <script src="js/scenes/accidents.js?v=2"></script>
+  <script src="js/scenes/owi.js?v=2"></script>
+  <script src="js/scenes/speed.js?v=2"></script>
+  <script src="js/scenes/lanes.js?v=2"></script>
+  <script src="js/scenes/rightofway.js?v=2"></script>
+  <script src="js/scenes/motorcycles.js?v=2"></script>
+  <script src="js/scenes/stops.js?v=2"></script>
+  <script src="js/scenes/parking.js?v=2"></script>
+  <script src="js/scenes/misc.js?v=2"></script>
+  <script src="js/scenes/equipment.js?v=2"></script>
+  <script src="js/scenes/size.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
 </body>
 </html>

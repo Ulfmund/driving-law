@@ -458,27 +458,35 @@
       '**Right turns:** approach and turn as close as practicable to the right-hand curb or edge.',
       '**Left turns (two-way roads):** approach from the part of the right half nearest the center line, and leave the intersection to the **right of the center line** of the road you enter.',
       'Special rules apply to one-way roads (keep left on a one-way when turning left), and local markings or signs can require a different path, which drivers must follow.',
+      'Driver education sums this up as **FALL: First Available Legal Lane**, meaning finish the turn in the nearest lane going your way, then signal and change lanes once it’s safe (MCL 257.642). For left turns, the statute itself requires only ending up to the right of the center line.',
     ],
-    dur: 14,
+    dur: 17.5,
     build(s) {
-      s.bg('cross', { lanes: 1 });
+      // Two lanes each way, so the scene can show which lane a turn should end in.
+      s.bg('cross', { lanes: 2, zoom: 1300 });
       const L = s.lane;
-      const a = s.car({ kind: 'car', color: COL.you, hi: true, path: s.P(-100, L.E(0), 0).to(700, L.E(0), 2).curve(L.S(0), L.E(0), L.S(0), 560, 2.6).to(L.S(0), 1000, 3.6) });
-      a.set(0.6, 'sig', 'R').set(2.6, 'sig', null);
-      s.trail(0.4, 3.6, `M 600 ${L.E(0)} L 700 ${L.E(0)} Q ${L.S(0)} ${L.E(0)} ${L.S(0)} 580`, '#7cf2a8');
-      const b = s.car({ kind: 'car', color: COL.red, path: s.P(-100, L.E(0), 3.6).to(660, L.E(0), 5.4).curve(L.N(0) + 20, L.E(0), L.N(0), 620, 6.2).curve(L.N(0) - 10, 700, L.S(0), 780, 6.8).to(L.S(0), 1000, 7.3) });
-      b.set(4, 'sig', 'R').set(6.2, 'sig', null).set(5.4, 'label', 'Swings wide').set(5.4, 'labelColor', 'bad').set(7, 'label', null);
-      s.mark(6.2, 7.4, L.N(0) + 80, 640, 'x');
-      const c = s.car({ kind: 'car', color: COL.you, hi: true, path: s.P(-100, L.E(0), 7.2).to(720, L.E(0), 8.8).curve(L.N(0), L.E(0), L.N(0), 380, 9.6).to(L.N(0), -120, 10.6) });
-      c.set(7.6, 'sig', 'L').set(9.6, 'sig', null);
-      s.trail(7.4, 10.6, `M 620 ${L.E(0)} L 720 ${L.E(0)} Q ${L.N(0)} ${L.E(0)} ${L.N(0)} 360`, '#7cf2a8');
-      const d = s.car({ kind: 'car', color: COL.red, path: s.P(-100, L.E(0), 10.4).to(660, L.E(0), 11.8).curve(740, L.E(0) - 10, L.S(0), 340, 12.6).curve(L.S(0) + 10, 260, L.N(0), 160, 13.2).to(L.N(0), -120, 13.8) });
-      d.set(10.6, 'sig', 'L').set(11.8, 'label', 'Cuts the corner').set(11.8, 'labelColor', 'bad');
-      s.mark(12.4, 14, L.S(0) - 80, 300, 'x');
-      s.say(0, 'Right turn: stay as close as practicable to the right edge or curb.', 'good')
-        .say(4.6, 'Swinging wide into the other lane is a violation.', 'bad')
-        .say(7.6, 'Left turn: approach next to the center line and leave the intersection to the right of the new road’s center line.', 'good')
-        .say(11.6, 'Cutting the corner puts you on the wrong side of the road you’re entering.', 'bad');
+      const near = L.cy + L.HW + 120; // a point down the south road, past the crosswalk
+      const a = s.car({ kind: 'car', color: COL.you, hi: true, path: s.P(-100, L.E(0), 0).to(600, L.E(0), 2).curve(L.S(0), L.E(0), L.S(0), near, 2.7).to(L.S(0), 1000, 3.7) });
+      a.set(0.6, 'sig', 'R').set(2.7, 'sig', null);
+      s.trail(0.4, 3.7, `M 500 ${L.E(0)} L 600 ${L.E(0)} Q ${L.S(0)} ${L.E(0)} ${L.S(0)} ${near + 20}`, '#2fbf6a');
+      s.note(2.4, 3.7, L.S(0), near, 'Right lane of the new road', 'good', { dx: -230, dy: 30 });
+      const b = s.car({ kind: 'car', color: COL.red, path: s.P(-100, L.E(0), 3.7).to(600, L.E(0), 5.5).curve(L.S(1), L.E(0), L.S(1), near, 6.3).to(L.S(1), 1000, 7.3) });
+      b.set(4.1, 'sig', 'R').set(6.3, 'sig', null).set(5.5, 'label', 'Swings into the far lane').set(5.5, 'labelColor', 'bad').set(7.1, 'label', null);
+      s.trail(5.5, 7.4, `M 500 ${L.E(0)} L 600 ${L.E(0)} Q ${L.S(1)} ${L.E(0)} ${L.S(1)} ${near + 20}`, '#d63a2f');
+      s.mark(6.2, 7.4, L.S(1) + 110, near, 'x');
+      const c = s.car({ kind: 'car', color: COL.you, hi: true, path: s.P(-100, L.E(1), 7.4).to(640, L.E(1), 9.2).curve(L.N(1), L.E(1), L.N(1), L.cy - L.HW - 40, 10).to(L.N(1), -120, 11) });
+      c.set(7.8, 'sig', 'L').set(10, 'sig', null);
+      s.trail(7.6, 11, `M 560 ${L.E(1)} L 640 ${L.E(1)} Q ${L.N(1)} ${L.E(1)} ${L.N(1)} ${L.cy - L.HW - 60}`, '#2fbf6a');
+      s.note(9.8, 11, L.N(1), L.cy - L.HW - 60, 'Lane just right of the center line', 'good', { dx: 260, dy: -10 });
+      const d = s.car({ kind: 'car', color: COL.red, path: s.P(-100, L.E(1), 11).to(640, L.E(1), 12.6).curve(720, L.E(1) - 12, L.S(1), L.cy - L.HW + 10, 13.3).curve(L.S(1) + 6, L.cy - L.HW - 80, L.N(1), L.cy - L.HW - 170, 13.9).to(L.N(1), -120, 14.5) });
+      d.set(11.2, 'sig', 'L').set(12.6, 'label', 'Cuts the corner').set(12.6, 'labelColor', 'bad').set(14.4, 'label', null);
+      s.trail(12.8, 14.8, `M 560 ${L.E(1)} L 640 ${L.E(1)} Q 720 ${L.E(1) - 12} ${L.S(1)} ${L.cy - L.HW + 10}`, '#d63a2f');
+      s.mark(13.2, 14.8, L.S(1) - 120, L.cy - L.HW - 40, 'x');
+      s.say(0, 'Right turn: turn as close as practicable to the right curb, ending in the right lane of the new road.', 'good')
+        .say(4.4, 'Swinging wide into the far lane breaks that rule.', 'bad')
+        .say(7.8, 'Left turn: start from the lane next to the center line and end up to the right of the new road’s center line.', 'good')
+        .say(11.4, 'Cutting the corner puts you on the wrong side of the road you’re entering.', 'bad')
+        .say(14.8, 'Driver training calls this FALL, First Available Legal Lane: finish in the nearest lane going your way, then signal and change lanes if you need to.');
     },
   });
 
